@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MentaPet — Choose Your Pet</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Lottie for pet animations -->
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <!-- Auth helpers (guards) -->
+  <script src="auth.js" defer></script>
+</head>
+<body class="mood-calm">
+<script>document.addEventListener('DOMContentLoaded', requireAuth);</script>
+
+<header class="topbar">
+  <h1>🐾 MentaPet</h1>
+  <p class="tagline">Choose your mindful companion</p>
+</header>
+
+<main class="select-grid" id="main" tabindex="-1">
+  <button class="pet-card" data-pet="nova" aria-label="Choose Nova the cat">
+    <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_hy4txr.json" background="transparent" speed="1" loop autoplay></lottie-player>
+    <div class="pet-name">Nova 🐱</div>
+    <div class="pet-desc">Witty & calm</div>
+  </button>
+
+  <button class="pet-card" data-pet="lumi" aria-label="Choose Lumi the dog">
+    <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_b3xkpv.json" background="transparent" speed="1" loop autoplay></lottie-player>
+    <div class="pet-name">Lumi 🐶</div>
+    <div class="pet-desc">Loyal & uplifting</div>
+  </button>
+
+  <button class="pet-card" data-pet="bub" aria-label="Choose Bub the blob">
+    <lottie-player src="https://assets8.lottiefiles.com/packages/lf20_4kx2q32n.json" background="transparent" speed="1" loop autoplay></lottie-player>
+    <div class="pet-name">Bub 💧</div>
+    <div class="pet-desc">Cheerful & bubbly</div>
+  </button>
+</main>
+
+<footer class="footer">
+  <button id="contrastBtn" class="ghost small">High Contrast</button>
+  <button onclick="logout()" class="ghost small" style="margin-left:8px;">Logout</button>
+</footer>
+
+<script>
+  // simple picker → save pet → go to room
+  document.querySelectorAll('.pet-card').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      localStorage.setItem('mentapet:pet', btn.dataset.pet);
+      location.href = 'room.html';
+    });
+  });
+  document.getElementById('contrastBtn').onclick =
+    ()=> document.body.classList.toggle('a11y-contrast');
+</script>
+</body>
+</html>

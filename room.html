@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MentaPet — Your Room</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+</head>
+<body class="mood-calm">
+  <a class="skip-link" href="#main">Skip to main</a>
+
+  <header class="topbar">
+    <h1>🐾 MentaPet</h1>
+    <p class="tagline">Take care of your mind by taking care of your pet.</p>
+  </header>
+
+  <main class="room-grid" id="main" tabindex="-1">
+    <!-- LEFT: sidebar -->
+    <aside class="sidebar">
+      <div class="card">
+        <h3>Streak</h3>
+        <div id="streak">🔥 1 day</div>
+        <button id="learnBtn" class="secondary" aria-label="Show an inclusive communication tip">📘 Learn Mode</button>
+        <button id="contrastBtn" class="ghost small">High Contrast</button>
+      </div>
+      <div class="card">
+        <h3>Resources</h3>
+        <button id="openCare" class="secondary">Open Care Mode</button>
+      </div>
+    </aside>
+
+    <!-- CENTER: pet -->
+    <section class="pet-stage card">
+      <lottie-player id="petAnim" background="transparent" speed="1" loop autoplay></lottie-player>
+      <div id="petStatus" class="pet-status">Your pet feels calm.</div>
+      <div class="stage-buttons">
+        <button id="breatheBtn" class="secondary">🌬 Breathe 60s</button>
+        <button id="affirmBtn" class="secondary">💖 Affirmation</button>
+      </div>
+    </section>
+
+    <!-- RIGHT: chat -->
+    <section class="chat card">
+      <h3>How are you feeling?</h3>
+      <div id="reply" class="reply" aria-live="polite"></div>
+      <textarea id="moodInput" rows="4" placeholder="Type a sentence..."></textarea>
+      <div class="buttons">
+        <button id="analyzeBtn" class="primary" aria-label="Analyze how I feel">Analyze</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- CARE MODE MODAL -->
+  <div id="careModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="careTitle">
+    <div class="modal-content">
+      <h2 id="careTitle">I’m worried about you 💙</h2>
+      <p>It sounds really heavy. You deserve support from a real person.</p>
+      <div id="hotlines" class="care-actions"></div>
+      <div class="care-secondary">
+        <button id="groundBtn" class="secondary">Try a 60-second grounding</button>
+        <button id="closeCare" class="ghost">I’m okay for now</button>
+      </div>
+      <small class="disclaimer">MentaPet does not diagnose or replace professional care.</small>
+    </div>
+  </div>
+
+  <!-- BREATHING OVERLAY -->
+  <div id="breathOverlay" class="overlay hidden" aria-hidden="true">
+    <div class="breather">
+      <div class="circle" id="breathCircle"></div>
+      <div id="breathText" class="breath-text">Inhale…</div>
+      <button id="stopBreath" class="ghost small">Stop</button>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <small>We support and connect you to real help when needed. Your feelings are valid. 💛</small>
+  </footer>
+
+  
+  <script src="auth.js" defer></script>
+  <script src="main.js" defer></script>
+</body>
+</html>

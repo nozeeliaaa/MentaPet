@@ -1,0 +1,8 @@
+{
+  "name": "mentapet",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "openai": "^4.55.0"
+  }
+}

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MentaPet — Sign Up</title>
+<style>
+:root{ --bg:#0f172a; --card:#0b0f1a; --text:#e5e7eb; --muted:#9ca3af; --primary:#8b5cf6; --danger:#ef4444; }
+*{box-sizing:border-box} html,body{height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--text);}
+body{ background: radial-gradient(1200px 600px at 20% 10%, #1f2937 0%, var(--bg) 55%, #030712 100%); }
+.topbar{ text-align:center; padding:18px 12px;}
+.topbar h1{ margin:0 0 6px; font-weight:800;}
+.tagline{ margin:0; color:var(--muted); }
+.select-grid{ max-width:480px; margin:40px auto; padding:16px; display:grid; gap:16px; }
+.login-card { display:flex; flex-direction:column; gap:10px; padding:24px; border-radius:14px; background:#0b0f1a; border:1px solid #1f2937; }
+.login-card h2{ text-align:center; margin-bottom:12px; }
+.login-card input{ width:100%; padding:12px; border-radius:8px; border:1px solid #1f2937; background:#0a0f1a; color:var(--text); outline:none; }
+.login-card input:focus{ border-color:var(--primary); box-shadow:0 0 4px var(--primary); }
+.login-card button{ margin-top:10px; width:100%; padding:12px; border:none; border-radius:12px; background:var(--primary); color:#fff; font-weight:600; cursor:pointer; }
+.login-card p{ text-align:center; color:var(--muted); margin-top:10px; }
+.login-card a{ color:var(--primary); text-decoration:none; } .login-card a:hover{ text-decoration:underline; }
+.error-msg{ color:var(--danger); font-size:.9rem; min-height:18px; text-align:center; }
+</style>
+</head>
+<body class="mood-calm">
+<script src="auth.js"></script>
+<script>document.addEventListener('DOMContentLoaded', redirectIfAuthed);</script>
+
+<header class="topbar">
+  <h1>🐾 MentaPet</h1>
+  <p class="tagline">Create an account to start your journey</p>
+</header>
+
+<main class="select-grid" id="main" tabindex="-1">
+  <div class="login-card">
+    <h2>Sign Up</h2>
+    <form id="signupForm">
+      <input type="text" id="name" placeholder="Full Name" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password"
+             pattern="(?=.*[A-Z]).{8,}"
+             title="At least 8 characters and 1 uppercase letter"
+             required />
+      <input type="password" id="confirmPassword" placeholder="Confirm Password"
+             pattern="(?=.*[A-Z]).{8,}"
+             title="Must match password"
+             required />
+      <button type="submit">Sign Up</button>
+      <div class="error-msg" id="errorMsg"></div>
+    </form>
+    <p>Already have an account? <a href="login.html">Login</a></p>
+  </div>
+</main>
+
+<script>
+function getUsers(){ return JSON.parse(localStorage.getItem('mentapetUsers') || '[]'); }
+function saveUser(user){
+  const users = getUsers();
+  users.push(user);
+  localStorage.setItem('mentapetUsers', JSON.stringify(users));
+}
+
+document.getElementById('signupForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const password = document.getElementById('password').value;
+  const confirm = document.getElementById('confirmPassword').value;
+  const error = document.getElementById('errorMsg');
+
+  // Basic validations
+  if(password !== confirm){
+    error.textContent = "Passwords do not match!";
+    return;
+  }
+  const users = getUsers();
+  if(users.some(u => u.email === email)){
+    error.textContent = "An account with this email already exists!";
+    return;
+  }
+
+  // Save & auto-login
+  saveUser({ name, email, password });
+  setCurrentUser({ name, email }); // from auth.js
+
+  error.style.color = "lime";
+  error.textContent = "Account created! Let’s pick your pet…";
+  setTimeout(()=>{ window.location.href = "index.html"; }, 800);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+:root{
+    --bg:#0f172a; --card:#0b0f1a; --text:#e5e7eb; --muted:#9ca3af;
+    --primary:#8b5cf6; --secondary:#22d3ee; --danger:#ef4444;
+  }
+  *{box-sizing:border-box} html,body{height:100%}
+  body{
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--text);
+    background: radial-gradient(1200px 600px at 20% 10%, #1f2937 0%, var(--bg) 55%, #030712 100%);
+    transition: background .6s ease;
+  }
+  .topbar{ text-align:center; padding:18px 12px;}
+  .topbar h1{ margin:0 0 6px; font-weight:800;}
+  .tagline{ margin:0; color:var(--muted); }
+  .skip-link{ position:absolute; left:-999px; }
+  .skip-link:focus{ left:8px; top:8px; background:#fff; color:#000; padding:8px; }
+  
+  .card{ background:var(--card); border:1px solid #1f2937; border-radius:14px; padding:14px; }
+  
+  .select-grid{
+    max-width:980px; margin:0 auto; padding:16px; display:grid; gap:16px;
+    grid-template-columns:repeat(3,1fr);
+  }
+  .pet-card{ display:flex; flex-direction:column; gap:6px; padding:10px; border-radius:14px; border:1px solid #1f2937; background:#0a0f1a; cursor:pointer; }
+  .pet-card:hover{ outline:2px solid #334155; }
+  .pet-name{ font-weight:700; }
+  .pet-desc{ color:var(--muted); }
+  lottie-player{ width:100%; max-width:420px; min-height:220px; }
+  
+  .room-grid{
+    max-width:1200px; margin:0 auto; padding:16px; display:grid; gap:16px;
+    grid-template-columns:260px 1fr 360px;
+  }
+  .sidebar .card + .card{ margin-top:12px; }
+  .pet-stage{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .pet-status{ color:var(--muted); font-size:.95rem; }
+  .chat .reply{ min-height:60px; padding:10px; border:1px dashed #203047; border-radius:12px; margin-bottom:8px; }
+  textarea{ width:100%; resize:vertical; border-radius:12px; background:#0b1020; color:var(--text); border:1px solid #1f2937; padding:12px; outline:none; }
+  textarea:focus{ border-color:#334155; box-shadow:0 0 0 2px #0ea5e933; }
+  
+  .buttons{ display:flex; gap:8px; flex-wrap:wrap; }
+  button{ cursor:pointer; border:0; border-radius:12px; padding:10px 14px; font-weight:600; }
+  .primary{ background:var(--primary); color:white; }
+  .secondary{ background:#0b1020; color:var(--text); border:1px solid #1f2937; }
+  .ghost{ background:transparent; color:var(--muted); border:1px dashed #334155; }
+  .small{ font-size:.85rem; padding:6px 10px; }
+  .stage-buttons{ display:flex; gap:8px; }
+  
+  .modal{ position:fixed; inset:0; display:grid; place-items:center; background:#0008; z-index:50; }
+  .hidden{ display:none !important; }
+  .modal-content{ width:min(560px,92vw); background:#0b0f1a; border:1px solid #243042; border-radius:16px; padding:18px; }
+  .care-actions{ display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+  .care-actions a, .care-actions button{ background:#172036; color:#e5e7eb; border:1px solid #243042; padding:10px 14px; border-radius:12px; }
+  .care-actions .hotline{ border-color:var(--danger); }
+  
+  .overlay{ position:fixed; inset:0; background:#0009; display:grid; place-items:center; z-index:45; }
+  .breather{ text-align:center; }
+  .circle{ width:160px; height:160px; border-radius:50%; border:3px solid var(--secondary); margin:12px auto 8px; animation:breathe 8s ease-in-out infinite; }
+  .breath-text{ color:#cbd5e1; margin-bottom:8px; }
+  @keyframes breathe{ 0%{transform:scale(.8)} 50%{transform:scale(1.1)} 100%{transform:scale(.8)} }
+  
+  .footer{ text-align:center; color:var(--muted); padding:22px 12px 28px; }
+  
+  body.mood-happy{ background: radial-gradient(1100px 520px at 20% 10%, #2b3a16 0%, var(--bg) 55%, #030712 100%); }
+  body.mood-calm { background: radial-gradient(1100px 520px at 20% 10%, #0b2433 0%, var(--bg) 55%, #030712 100%); }
+  body.mood-sad  { background: radial-gradient(1100px 520px at 20% 10%, #0b1e3a 0%, var(--bg) 55%, #030712 100%); }
+  body.mood-stressed{ background: radial-gradient(1100px 520px at 20% 10%, #2b1c08 0%, var(--bg) 55%, #030712 100%); }
+  
+  :focus-visible{ outline:2px solid #6ee7ff; outline-offset:2px; }
+  body.a11y-contrast{ --bg:#000; --card:#111; --text:#fff; --muted:#eee; --primary:#fff; --secondary:#fff; }
+  @media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important;} }
+  @media (max-width:1000px){ .room-grid{ grid-template-columns:1fr; } .select-grid{ grid-template-columns:1fr; } }
+
+  /* --- MentaPet: long AI replies --- */
+.chat .reply {
+  /* grow with content */
+  height: auto;
+  max-height: none;
+  overflow: visible;
+
+  /* readable text */
+  line-height: 1.5;
+  font-size: 1rem;
+
+  /* preserve line breaks and wrap long words if needed */
+  white-space: pre-wrap;          /* keep \n from AI */
+  overflow-wrap: anywhere;        /* break super-long words/links */
+
+  /* optional: a little more padding looks nicer for paragraphs */
+  padding: 12px 14px;
+}
+
+.card { overflow: visible; }
