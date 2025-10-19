@@ -6,7 +6,26 @@
   <title>MentaPet — Your Room</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+
+  <style>
+    .settings-fab {
+      position: fixed; right: 20px; bottom: 20px;
+      width: 58px; height: 58px; border-radius: 50%;
+      border: 0; background:#22d3ee; color:#0f172a; font-size:1.6rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,.4); cursor:pointer; z-index:1000;
+      transition: transform .2s;
+    }
+    .settings-fab:hover{ transform: scale(1.07); }
+
+    .modal.hidden{ display:none; }
+    .modal{ position:fixed; inset:0; background:#000b; display:flex; align-items:center; justify-content:center; z-index:1001; }
+    .modal-content{ width:min(360px,92vw); background:#0b0f1a; color:#e5e7eb; border:1px solid #243042; border-radius:14px; padding:20px; }
+    .modal-content h2{ margin-top:0; }
+    .modal-content label{ display:block; margin-top:14px; margin-bottom:6px; font-weight:600; }
+    .modal-content input[type=range]{ width:100%; }
+  </style>
 </head>
+
 <body class="mood-calm">
   <a class="skip-link" href="#main">Skip to main</a>
 
@@ -24,30 +43,17 @@
         <button id="learnBtn" class="secondary" aria-label="Show an inclusive communication tip">📘 Learn Mode</button>
         <button id="contrastBtn" class="ghost small">High Contrast</button>
       </div>
+
       <div class="card">
         <h3>Resources</h3>
         <button id="openCare" class="secondary">Open Care Mode</button>
         <button id="resourcesBtn" class="secondary" style="margin-top:8px;">Find Local Help</button>
-      </div>   
+      </div>
     </aside>
 
     <!-- CENTER: pet -->
     <section class="pet-stage card">
-      <!-- 🐶 3D Golden Dog animation -->
-      <div class="dog" id="dog">
-        <div class="head">
-          <div class="ear left"></div>
-          <div class="ear right"></div>
-          <div class="eye left"></div>
-          <div class="eye right"></div>
-          <div class="snout">
-            <div class="nose"></div>
-            <div class="mouth"></div>
-          </div>
-        </div>
-        <div class="body"></div>
-        <div class="tail"></div>
-      </div>
+      <div id="petSlot" style="width:100%; display:flex; justify-content:center; padding:12px 0;"></div>
 
       <div id="petStatus" class="pet-status">Your pet feels calm.</div>
       <div class="stage-buttons">
@@ -63,6 +69,8 @@
       <textarea id="moodInput" rows="4" placeholder="Type a sentence..."></textarea>
       <div class="buttons">
         <button id="analyzeBtn" class="primary" aria-label="Analyze how I feel">Analyze</button>
+        <button id="micBtn" class="secondary" aria-pressed="false" style="margin-left:8px">🎤 Speak</button>
+        <small id="micHint" class="muted" style="margin-left:8px; display:none;">Listening…</small>
       </div>
     </section>
   </main>
@@ -90,45 +98,233 @@
     </div>
   </div>
 
+  <!-- 🎤 Speech-to-Text -->
+  <script>
+    const micBtn = document.getElementById("micBtn");
+    const moodInput = document.getElementById("moodInput");
+    window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (window.SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+
+      micBtn.addEventListener("click", () => {
+        recognition.start();
+        micBtn.textContent = "🎙️ Listening...";
+      });
+
+      recognition.addEventListener("result", (e) => {
+        const transcript = e.results[0][0].transcript;
+        moodInput.value = transcript;
+        document.getElementById("analyzeBtn")?.click();
+      });
+
+      recognition.addEventListener("end", () => {
+        micBtn.textContent = "🎤 Speak";
+      });
+    } else {
+      micBtn.addEventListener("click", () => {
+        alert("Speech input not supported. Try Chrome or Edge.");
+      });
+    }
+  </script>
+
+  <!-- ⚙️ Floating Settings Button -->
+  <button id="settingsBtn" class="settings-fab" aria-label="Open settings">⚙️</button>
+
+  <!-- ⚙️ Settings Modal -->
+  <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-content">
+      <h2 id="settingsTitle">Settings</h2>
+
+      <label for="voiceSelect">🎙️ Reply voice</label>
+      <select id="voiceSelect"></select>
+
+      <label for="rateControl">🗣️ Speech speed</label>
+      <input type="range" id="rateControl" min="0.5" max="1.5" value="1" step="0.1" />
+      <small id="rateValue">1x</small>
+
+      <div style="margin-top:14px;">
+        <label><input type="checkbox" id="autoSpeakToggle" checked /> 🔊 Auto-speak replies</label>
+      </div>
+
+      <div class="modal-actions" style="margin-top:20px; text-align:right;">
+        <button id="closeSettings" class="secondary">Done</button>
+      </div>
+    </div>
+  </div>
+
   <footer class="footer">
     <small>We support and connect you to real help when needed. Your feelings are valid. 💛</small>
   </footer>
 
-  <!-- Original scripts -->
+  <!-- Scripts -->
   <script src="auth.js" defer></script>
   <script src="main.js" defer></script>
 
-  <!-- 🧠 Dog interaction script -->
   <script>
-    const dog = document.getElementById('dog');
-    const tail = dog?.querySelector('.tail');
-    const mouth = dog?.querySelector('.mouth');
-    const petStatus = document.getElementById('petStatus');
+    // -------- Resources button
+    document.getElementById('resourcesBtn')?.addEventListener('click', () => {
+      location.href = 'resources.html';
+    });
 
-    function setEmotion(emotion) {
-      if (!mouth || !tail) return;
-      if (emotion === 'happy') {
-        mouth.classList.add('happy');
-        mouth.classList.remove('sad');
-        tail.style.animation = 'wag 0.5s ease-in-out infinite alternate';
-        petStatus.textContent = 'Your pet is happy! 🐶';
-      } else if (emotion === 'sad') {
-        mouth.classList.add('sad');
-        mouth.classList.remove('happy');
-        tail.style.animation = 'none';
-        tail.style.transform = 'translateX(-10px) translateZ(-50px) rotateZ(-10deg) rotateX(10deg)';
-        petStatus.textContent = 'Your pet feels calm.';
+    // -------- Settings modal
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettings = document.getElementById('closeSettings');
+
+    settingsBtn?.addEventListener('click', ()=> settingsModal.classList.remove('hidden'));
+    closeSettings?.addEventListener('click', ()=> settingsModal.classList.add('hidden'));
+    settingsModal?.addEventListener('click', (e)=>{ if(e.target===settingsModal) settingsModal.classList.add('hidden'); });
+
+    // -------- Voice prefs
+    const voiceSel = document.getElementById('voiceSelect');
+    const rateCtl = document.getElementById('rateControl');
+    const rateValue = document.getElementById('rateValue');
+    const autoSpeak = document.getElementById('autoSpeakToggle');
+
+    function savePrefs(){
+      localStorage.setItem('mentapet:voice', voiceSel.value || '');
+      localStorage.setItem('mentapet:rate',  rateCtl.value || '1');
+      localStorage.setItem('mentapet:autoSpeak', autoSpeak.checked ? 'true' : 'false');
+    }
+
+    function loadPrefsAndFillVoices(){
+      const storedVoice = localStorage.getItem('mentapet:voice') || '';
+      const storedRate  = localStorage.getItem('mentapet:rate') || '1';
+      const storedAuto  = localStorage.getItem('mentapet:autoSpeak');
+
+      rateCtl.value = storedRate;
+      rateValue.textContent = (+storedRate).toFixed(1) + 'x';
+      autoSpeak.checked = storedAuto === null ? true : storedAuto === 'true';
+
+      const fill = () => {
+        if (!window.speechSynthesis) return;
+        const voices = speechSynthesis.getVoices();
+        if (!voices.length) return;
+
+        voiceSel.innerHTML = '';
+        voices.filter(v => v.lang.startsWith('en')).forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v.name;
+          opt.textContent = `${v.name} — ${v.lang}`;
+          voiceSel.appendChild(opt);
+        });
+
+        if (storedVoice) voiceSel.value = storedVoice;
+      };
+
+      if (window.speechSynthesis) {
+        fill();
+        speechSynthesis.onvoiceschanged = fill;
       }
     }
 
-    // Initial state
-    setEmotion('sad');
+    voiceSel?.addEventListener('change', savePrefs);
+    rateCtl?.addEventListener('input', () => { rateValue.textContent = (+rateCtl.value).toFixed(1) + 'x'; savePrefs(); });
+    autoSpeak?.addEventListener('change', savePrefs);
+    loadPrefsAndFillVoices();
 
-    // Pet the dog on click
-    dog?.addEventListener('click', () => {
-      setEmotion('happy');
-      setTimeout(() => setEmotion('sad'), 3000);
+    // -------- Pet mount logic
+    function slotEmpty(){ const s=document.getElementById('petSlot'); return s && !s.firstElementChild; }
+
+    function mountDog(el) {
+      el.innerHTML = `
+        <div class="dog">
+          <div class="head">
+            <div class="ear left"></div>
+            <div class="ear right"></div>
+            <div class="eye left"></div>
+            <div class="eye right"></div>
+            <div class="snout">
+              <div class="nose"></div>
+              <div class="mouth"></div>
+            </div>
+          </div>
+          <div class="body"></div>
+          <div class="tail"></div>
+        </div>`;
+    }
+
+    function mountCat(el){
+      el.innerHTML = `
+        <div class="animal cat" id="cat">
+          <div class="head">
+            <div class="ear left"></div><div class="ear right"></div>
+            <div class="eye left"></div><div class="eye right"></div>
+            <div class="nose"></div><div class="mouth"></div>
+            <div class="whisker left1"></div><div class="whisker left2"></div>
+            <div class="whisker right1"></div><div class="whisker right2"></div>
+          </div>
+          <div class="body"></div>
+        </div>`;
+    }
+
+    function mountBear(el){
+      el.innerHTML = `
+        <div class="animal panda" id="bear">
+          <div class="head">
+            <div class="ear left"></div><div class="ear right"></div>
+            <div class="eye-spot left"></div><div class="eye-spot right"></div>
+            <div class="eye left"></div><div class="eye right"></div>
+            <div class="nose"></div><div class="mouth"></div>
+          </div>
+          <div class="body"><div class="arm left"></div><div class="arm right"></div></div>
+        </div>`;
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const slot = document.getElementById('petSlot');
+      if (!slot || !slotEmpty()) return;
+
+      const saved = (localStorage.getItem('mentapet:pet') || '').toLowerCase();
+      const pet = ({ nova:'cat', lumi:'dog', bub:'bear' }[saved]) || saved || 'dog';
+
+      if (pet === 'dog')      mountDog(slot);
+      else if (pet === 'cat') mountCat(slot);
+      else if (pet === 'bear')mountBear(slot);
+      else                    mountDog(slot);
     });
   </script>
+
+  <script>
+const tail = document.querySelector('.tail');
+const mouth = document.querySelector('.mouth');
+
+let lastMood = null; // Track last mood to avoid repeating sounds
+
+function setEmotion(emotion) {
+  if (emotion === lastMood) return; // do nothing if same mood
+  lastMood = emotion;
+
+  // Reset classes
+  mouth.classList.remove('happy','sad');
+  tail.style.animation = 'none';
+
+  if (emotion === 'happy') {
+    mouth.classList.add('happy');
+    tail.style.animation = 'wag 0.5s ease-in-out infinite alternate';
+    const bark = new Audio('bark.mp3');
+    bark.play().catch(err => console.log('Audio blocked:', err));
+  } 
+  else if (emotion === 'sad') {
+    mouth.classList.add('sad');
+    tail.style.transform = 'translateX(-10px) translateZ(-50px) rotateZ(-10deg) rotateX(10deg)';
+    const whine = new Audio('whine.mp3');
+    whine.play().catch(err => console.log('Audio blocked:', err));
+  }
+}
+
+// Start with happy
+setEmotion('happy');
+
+// Toggle every 3 seconds
+let happy = true;
+setInterval(() => {
+  happy = !happy;
+  setEmotion(happy ? 'happy' : 'sad');
+}, 3000);
+</script>
 </body>
 </html>

@@ -5,16 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>3D Golden Dog</title>
 <style>
-/* * EDITED CSS: Ears are lower and behind the head. 
- * Tail is attached to the back of the body. 
- */
-
 body {
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
-  background: radial-gradient(circle, #f5e0b7 0%, #f0c77e 100%);
+  /*background: radial-gradient(circle, #f5e0b7 0%, #f0c77e 100%);*/
   margin:0;
   perspective: 1000px; 
 }
@@ -42,27 +38,25 @@ body {
   transform-style: preserve-3d;
 }
 
-/* Ears - MODIFIED POSITION */
+/* Ears */
 .ear {
   position: absolute;
   width: 40px;
   height: 60px;
   background: linear-gradient(145deg, #f6d07e, #f0b84a);
   border-radius: 50% 50% 0 0;
-  top: 15px; /* Lower position on the head */
+  top: 15px;
   transform-origin: top center;
   box-shadow: -2px 5px 10px rgba(0,0,0,0.2);
 }
 
 .ear.left {
-  left: -20px; /* Adjusted horizontal position */
-  /* Moved back slightly using translateZ() */
+  left: -20px;
   transform: rotateY(-30deg) rotateX(10deg) translateZ(-5px); 
 }
 
 .ear.right {
-  right: -20px; /* Adjusted horizontal position */
-  /* Moved back slightly using translateZ() */
+  right: -20px;
   transform: rotateY(30deg) rotateX(10deg) translateZ(-5px); 
 }
 
@@ -77,15 +71,8 @@ body {
   box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
 }
 
-.eye.left {
-  left: 20px;
-  transform: translateZ(10px);
-}
-
-.eye.right {
-  right: 20px;
-  transform: translateZ(10px);
-}
+.eye.left { left: 20px; transform: translateZ(10px); }
+.eye.right { right: 20px; transform: translateZ(10px); }
 
 /* Snout */
 .snout {
@@ -126,17 +113,8 @@ body {
   transition: all 0.3s ease;
 }
 
-/* Happy/Sad Mouth */
-.mouth.happy {
-  border-bottom: 3px solid #000;
-  border-radius: 0 0 15px 15px;
-}
-
-.mouth.sad {
-  border-top: 3px solid #000;
-  border-bottom: none;
-  border-radius: 15px 15px 0 0;
-}
+.mouth.happy { border-radius: 0 0 15px 15px; border-bottom: 3px solid #000; }
+.mouth.sad { border-top: 3px solid #000; border-bottom: none; border-radius: 15px 15px 0 0; }
 
 /* Body */
 .body {
@@ -151,22 +129,21 @@ body {
   box-shadow: 5px 5px 20px rgba(0,0,0,0.3);
 }
 
-/* Tail connected to back of body - MODIFIED POSITION */
+/* Tail */
 .tail {
   position: absolute;
   width: 50px;
   height: 12px;
   background: #f0b84a;
   border-radius: 50%;
-  top: 135px; /* Positioned at the back/butt area of the body */
-  left: 50%; /* Start from horizontal center */
-  transform-origin: left center; /* Wag from base */
-  /* Aligned to the center-back of the body, then rotated for initial look */
+  top: 135px;
+  left: 50%;
+  transform-origin: left center;
   transform: translateX(-10px) translateZ(-50px) rotateX(0deg) rotateZ(0deg); 
   transition: transform 0.3s ease;
 }
 
-/* Animations - MODIFIED for new tail position */
+/* Animations */
 @keyframes wag {
   0% { transform: translateX(-10px) translateZ(-50px) rotateX(0deg) rotateZ(30deg); }
   100% { transform: translateX(-10px) translateZ(-50px) rotateX(0deg) rotateZ(-30deg); }
@@ -196,29 +173,33 @@ body {
 </div>
 
 <script>
-// Get elements
 const tail = document.querySelector('.tail');
 const mouth = document.querySelector('.mouth');
 
-// Function to change emotion
+let lastMood = null; // Track last mood to avoid repeating sounds
+
 function setEmotion(emotion) {
+  if (emotion === lastMood) return; // do nothing if same mood
+  lastMood = emotion;
+
+  // Reset classes
+  mouth.classList.remove('happy','sad');
+  tail.style.animation = 'none';
+
   if (emotion === 'happy') {
     mouth.classList.add('happy');
-    mouth.classList.remove('sad');
     tail.style.animation = 'wag 0.5s ease-in-out infinite alternate';
-  } else if (emotion === 'sad') {
+  } 
+  else if (emotion === 'sad') {
     mouth.classList.add('sad');
-    mouth.classList.remove('happy');
-    tail.style.animation = 'none';
-    // Updated droopy tail position to match the new base
-    tail.style.transform = 'translateX(-10px) translateZ(-50px) rotateZ(-10deg) rotateX(10deg)'; 
+    tail.style.transform = 'translateX(-10px) translateZ(-50px) rotateZ(-10deg) rotateX(10deg)';
   }
 }
 
-// Example usage
+// Start with happy
 setEmotion('happy');
 
-// Toggle emotion every 3 seconds
+// Toggle every 3 seconds
 let happy = true;
 setInterval(() => {
   happy = !happy;

@@ -48,6 +48,15 @@
   .modal{ position:fixed; inset:0; display:grid; place-items:center; background:#0008; z-index:50; }
   .hidden{ display:none !important; }
   .modal-content{ width:min(560px,92vw); background:#0b0f1a; border:1px solid #243042; border-radius:16px; padding:18px; }
+  .modal-content label + div {
+    margin-top: 14px;
+  }
+
+  .modal-actions {
+    margin-top: 20px;
+    text-align: right;
+  }
+  
   .care-actions{ display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
   .care-actions a, .care-actions button{ background:#172036; color:#e5e7eb; border:1px solid #243042; padding:10px 14px; border-radius:12px; }
   .care-actions .hotline{ border-color:var(--danger); }
@@ -93,122 +102,135 @@
 /* 🐶 Golden Dog Styling */
 .dog {
   position: relative;
-  width: 180px;
+  width: 200px;
   height: 200px;
-  margin: 0 auto;
+  transform-style: preserve-3d;
+  animation: float 3s ease-in-out infinite;
+}
+
+.head {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(145deg, #f6d07e, #f0b84a);
+  border-radius: 50%;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) translateZ(30px);
+  box-shadow: inset -5px -5px 15px rgba(0,0,0,0.2), 5px 5px 20px rgba(0,0,0,0.3);
   transform-style: preserve-3d;
 }
 
-.dog .head {
-  position: relative;
-  width: 120px;
-  height: 100px;
-  background: linear-gradient(145deg, #facc15, #d97706); /* golden tones */
-  border-radius: 50% 50% 45% 45%;
-  margin: 0 auto;
-  box-shadow: 0 4px 10px #0005;
+.ear {
+  position: absolute;
+  width: 40px;
+  height: 60px;
+  background: linear-gradient(145deg, #f6d07e, #f0b84a);
+  border-radius: 50% 50% 0 0;
+  top: 15px;
+  transform-origin: top center;
+  box-shadow: -2px 5px 10px rgba(0,0,0,0.2);
 }
 
-.dog .ear {
-  position: absolute;
-  width: 30px;
-  height: 50px;
-  background: linear-gradient(145deg, #b45309, #92400e);
-  border-radius: 50%;
-  top: -15px;
+.ear.left {
+  left: -20px;
+  transform: rotateY(-30deg) rotateX(10deg) translateZ(-5px);
 }
 
-.dog .ear.left { left: -10px; transform: rotate(-15deg); }
-.dog .ear.right { right: -10px; transform: rotate(15deg); }
+.ear.right {
+  right: -20px;
+  transform: rotateY(30deg) rotateX(10deg) translateZ(-5px);
+}
 
-.dog .eye {
+.eye {
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
   background: #000;
   border-radius: 50%;
-  top: 35px;
-  box-shadow: 0 0 0 3px #fff2; /* subtle glow */
+  top: 30px;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
 }
 
-.dog .eye.left { left: 30px; }
-.dog .eye.right { right: 30px; }
-
-.dog .snout {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 45px;
-  background: #fcd34d;
-  border-radius: 50% 50% 60% 60%;
-  box-shadow: inset 0 2px 4px #0003;
+.eye.left {
+  left: 20px;
+  transform: translateZ(10px);
 }
 
-.dog .nose {
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 20px;
-  height: 14px;
-  background: #000;
-  border-radius: 50%;
+.eye.right {
+  right: 20px;
+  transform: translateZ(10px);
 }
 
-.dog .mouth {
+.snout {
   position: absolute;
-  bottom: 8px;
+  width: 50px;
+  height: 40px;
+  background: linear-gradient(145deg, #f3c77f, #e0a83d);
+  border-radius: 50% / 40%;
+  bottom: 10px;
   left: 50%;
-  transform: translateX(-50%);
-  width: 30px;
+  transform: translateX(-50%) translateZ(20px);
+  box-shadow: inset -3px -3px 10px rgba(0,0,0,0.2);
+  transform-style: preserve-3d;
+}
+
+.nose {
+  position: absolute;
+  width: 15px;
   height: 10px;
+  background: #000;
+  border-radius: 50%;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%) translateZ(5px);
+}
+
+.mouth {
+  position: absolute;
+  width: 30px;
+  height: 5px;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
   border-bottom: 3px solid #000;
-  border-radius: 0 0 50% 50%;
   transition: all 0.3s ease;
 }
 
-.mouth.happy {
-  height: 20px;
-  border-radius: 50%;
-}
-
-.mouth.sad {
-  height: 10px;
-  transform: rotate(180deg);
-}
-
-.dog .body {
-  position: relative;
-  width: 140px;
-  height: 90px;
-  background: linear-gradient(145deg, #facc15, #d97706);
-  margin: -10px auto 0;
-  border-radius: 50% 50% 40% 40%;
-  box-shadow: 0 4px 10px #0005;
-}
-
-.dog .tail {
+.body {
   position: absolute;
-  right: -20px;
-  top: 30px;
-  width: 20px;
-  height: 60px;
-  background: linear-gradient(145deg, #b45309, #92400e);
+  width: 120px;
+  height: 80px;
+  background: linear-gradient(145deg, #f6d07e, #f0b84a);
+  border-radius: 40px;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateZ(-20px) rotateX(15deg);
+  box-shadow: 5px 5px 20px rgba(0,0,0,0.3);
+}
+
+.tail {
+  position: absolute;
+  width: 50px;
+  height: 12px;
+  background: #f0b84a;
   border-radius: 50%;
-  transform-origin: top center;
+  top: 135px;
+  left: 50%;
+  transform-origin: left center;
+  transform: translateX(-10px) translateZ(-50px) rotateX(0deg) rotateZ(0deg);
+  transition: transform 0.3s ease;
 }
 
 @keyframes wag {
-  0% { transform: rotateZ(0deg); }
-  100% { transform: rotateZ(30deg); }
+  0% { transform: translateX(-10px) translateZ(-50px) rotateX(0deg) rotateZ(30deg); }
+  100% { transform: translateX(-10px) translateZ(-50px) rotateX(0deg) rotateZ(-30deg); }
 }
 
-/* 🐶 Hover effect: subtle bounce */
-.dog:hover {
-  transform: translateY(-4px) scale(1.02);
-  transition: 0.3s ease;
+@keyframes float {
+  0%, 100% { transform: rotateY(0deg); }
+  50% { transform: rotateY(10deg); }
 }
 
 /* ——— Thumbnails on the picker ——— */
@@ -286,3 +308,27 @@
 /* Normalize drawing sizes on the picker */
 .pet-thumb .animal{ width:160px; height:160px; }  /* cat & panda */
 .pet-thumb .dog   { width:160px; height:160px; }
+
+/* Keep the pet inside the middle card */
+#petSlot {
+  height: 240px;                 /* pick a height you like (200–280 works well) */
+  display: flex;
+  align-items: center;           /* vertical center */
+  justify-content: center;       /* horizontal center */
+  overflow: hidden;              /* clip float/3D parts that poke out */
+  position: relative;            /* create a local positioning context */
+}
+
+/* Make sure pets behave like normal block content inside the slot */
+#petSlot .animal,
+#petSlot .dog {
+  position: relative;
+  margin: 0 auto;
+  max-width: 100%;
+  transform-origin: center;      /* nicer rotations */
+}
+
+/* Optional: give the pet-stage a little more headroom */
+.pet-stage.card {
+  padding-top: 16px;
+}

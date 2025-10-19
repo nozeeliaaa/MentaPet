@@ -1,5 +1,7 @@
 // =================== MentaPet - main.js (Vercel version) ===================
 
+let petRef = null; // holds { setEmotion }
+
 // ---------- Crisis + mood keywords (instant local safety) ----------
 const CRISIS = [
   "suicide","kill myself","end it","i want to die","i wanna die","don't want to live","don’t want to live",
@@ -55,14 +57,13 @@ async function getVoicesReady(timeoutMs = 2000){
     },200);
   });
 }
-
-async function pickVoice(){
+async function pickVoiceByName(name){
   const voices = await getVoicesReady();
-  const saved = localStorage.getItem('mentapet:voiceName');
-  if(saved){
-    const v = voices.find(v=>v.name===saved);
-    if(v) return v;
+  if (name){
+    const v = voices.find(v => v.name === name);
+    if (v) return v;
   }
+  // sensible fallbacks
   const preferred = [
     "Microsoft Aria Online (Natural) - English (United States)",
     "Microsoft Jenny Online (Natural) - English (United States)",
@@ -70,29 +71,59 @@ async function pickVoice(){
     "Google US English",
     "Samantha","Joanna","Luna"
   ];
-  let v = voices.find(v=>preferred.includes(v.name));
-  if(v) return v;
-  v = voices.find(v=>v.lang?.startsWith('en') && /female|samantha|aria|jenny|joanna|luna/i.test(v.name));
-  if(v) return v;
-  v = voices.find(v=>v.lang?.startsWith('en'));
+  let v = voices.find(v => preferred.includes(v.name));
+  if (v) return v;
+
+  v = voices.find(v => v.lang?.startsWith('en') && /female|samantha|aria|jenny|joanna|luna/i.test(v.name));
+  if (v) return v;
+
+  v = voices.find(v => v.lang?.startsWith('en'));
   return v || voices[0];
+}
+
+function getVoicePrefs(){
+  return {
+    autoSpeak: (localStorage.getItem('mentapet:autoSpeak') ?? 'true') === 'true',
+    rate: parseFloat(localStorage.getItem('mentapet:rate') || '1'),
+    voiceName: localStorage.getItem('mentapet:voice') || ''   // ✅ matches settings modal
+  };
 }
 
 async function speak(text, mood='calm'){
   try{
+    const prefs = getVoicePrefs();
+    if (!('speechSynthesis' in window)) return;
+
+    // If you want the toggle to gate *all* speaking by default,
+    // only call speak() when autoSpeak is on:
+    if (!prefs.autoSpeak) return;
+
     const synth = window.speechSynthesis;
     synth.cancel();
+
     const u = new SpeechSynthesisUtterance(text);
-    u.lang='en-US';
-    if(mood==='happy'){ u.rate=1.05; u.pitch=1.15; }
-    else if(mood==='sad'){ u.rate=0.95; u.pitch=1.0; }
-    else if(mood==='stressed'){ u.rate=0.98; u.pitch=1.05; }
-    else { u.rate=1.0; u.pitch=1.08; }
-    const v = await pickVoice();
-    if(v) u.voice = v;
-    setTimeout(()=>synth.speak(u),120);
-  }catch(e){ console.error('Speech error:', e); }
+    u.lang = 'en-US';
+
+    // base from user pref
+    const baseRate  = Math.min(1.5, Math.max(0.5, prefs.rate || 1));
+    const basePitch = 1.05;
+
+    // gentle mood tweaks
+    if (mood === 'happy'){ u.rate = baseRate + 0.05; u.pitch = basePitch + 0.10; }
+    else if (mood === 'sad'){ u.rate = Math.max(0.5, baseRate - 0.05); u.pitch = basePitch - 0.05; }
+    else if (mood === 'stressed'){ u.rate = baseRate; u.pitch = basePitch; }
+    else { u.rate = baseRate; u.pitch = basePitch; }
+
+    const v = await pickVoiceByName(prefs.voiceName);
+    if (v) u.voice = v;
+
+    synth.speak(u);
+  }catch(e){
+    console.error('Speech error:', e);
+  }
 }
+
+
 
 // ---------------------------------------------------------------------------
 // API: analyze text with OpenAI via Vercel serverless function (/api/ai)
@@ -147,9 +178,144 @@ async function analyzeTextWithAI(text){
   };
 }
 
+// ================== Pet builders (HTML-only) ==================
+function mountDog(container){
+  container.innerHTML = `
+    <div class="dog">
+      <div class="head">
+        <div class="ear left"></div>
+        <div class="ear right"></div>
+        <div class="eye left"></div>
+        <div class="eye right"></div>
+        <div class="snout"><div class="nose"></div><div class="mouth"></div></div>
+      </div>
+      <div class="body"></div>
+      <div class="tail"></div>
+    </div>
+  `;
+  const mouth = container.querySelector('.mouth');
+  const tail  = container.querySelector('.tail');
+
+  function setEmotion(state){
+    mouth.classList.remove('happy','sad');
+    tail.style.animation = '';
+    tail.style.transform  = 'translateX(-10px) translateZ(-50px) rotateZ(0deg)';
+    if(state==='happy'){
+      mouth.classList.add('happy');
+      tail.style.animation = 'wag .6s ease-in-out infinite alternate';
+    }else if(state==='sad'){
+      mouth.classList.add('sad');
+      tail.style.transform  = 'translateX(-10px) translateZ(-50px) rotateZ(-12deg) rotateX(10deg)';
+    }
+  }
+  setEmotion('neutral');
+  return { setEmotion };
+}
+
+function mountCat(container){
+  container.innerHTML = `
+    <div class="animal cat">
+      <div class="head">
+        <div class="ear left"></div><div class="ear right"></div>
+        <div class="eye left"></div><div class="eye right"></div>
+        <div class="nose"></div><div class="mouth"></div>
+        <div class="whisker left1"></div><div class="whisker left2"></div>
+        <div class="whisker right1"></div><div class="whisker right2"></div>
+      </div>
+      <div class="body"></div>
+    </div>
+  `;
+  const mouth = container.querySelector('.mouth');
+  function setEmotion(state){
+    // simple: smile (curved) when happy, flat otherwise
+    mouth.style.borderBottom = (state==='happy') ? '3px solid #000' : '3px solid #000';
+    mouth.style.transform     = (state==='sad') ? 'translateX(-50%) rotate(180deg)' : 'translateX(-50%)';
+  }
+  setEmotion('neutral');
+  return { setEmotion };
+}
+
+function mountBear(container){
+  container.innerHTML = `
+    <div class="animal panda">
+      <div class="head">
+        <div class="ear left"></div><div class="ear right"></div>
+        <div class="eye-spot left"></div><div class="eye-spot right"></div>
+        <div class="eye left"></div><div class="eye right"></div>
+        <div class="nose"></div><div class="mouth"></div>
+      </div>
+      <div class="body">
+        <div class="arm left"></div><div class="arm right"></div>
+      </div>
+    </div>
+  `;
+  const mouth = container.querySelector('.mouth');
+  const armsL = container.querySelector('.arm.left');
+  const armsR = container.querySelector('.arm.right');
+  function setEmotion(state){
+    // wave arms when happy, neutral otherwise, tiny droop when sad
+    armsL.style.transform = armsR.style.transform = '';
+    mouth.style.transform = 'translateX(-50%)';
+    if(state==='happy'){
+      armsL.style.animation = armsR.style.animation = 'pandaWave .9s ease-in-out infinite';
+    }else{
+      armsL.style.animation = armsR.style.animation = '';
+      if(state==='sad') mouth.style.transform = 'translateX(-50%) rotate(180deg)';
+    }
+  }
+  setEmotion('neutral');
+  return { setEmotion };
+}
+
+
+function updatePetEmotionFromMood(mood){
+  if (!petRef || !petRef.setEmotion) return;
+  const state = mood==='happy' ? 'happy' : mood==='sad' ? 'sad' : 'neutral';
+  petRef.setEmotion(state);
+}
+
+// tiny wave keyframes (can live in JS via <style> if you prefer)
+(function ensureBearAnim(){
+  const id='pandaWaveKey';
+  if(document.getElementById(id)) return;
+  const style=document.createElement('style');
+  style.id=id;
+  style.textContent=`@keyframes pandaWave{0%{transform:rotate(0deg)}50%{transform:rotate(-18deg)}100%{transform:rotate(0deg)}}`;
+  document.head.appendChild(style);
+})();
+
+
 // ---------------------------------------------------------------------------
 // Page init
 window.addEventListener('DOMContentLoaded', ()=>{
+
+  window.addEventListener('DOMContentLoaded', () => {
+  const chosen = localStorage.getItem('mentapet:pet') || 'dog'; // values: 'dog' | 'cat' | 'bear'
+  const slot   = document.getElementById('petSlot');
+  if (slot) {
+    if (chosen === 'dog' || chosen === 'lumi') {        // if you previously saved 'lumi' for dog
+      petRef = mountDog(slot);
+    } else if (chosen === 'cat' || chosen === 'nova') { // if you previously saved 'nova' for cat
+      petRef = mountCat(slot);
+    } else if (chosen === 'bear' || chosen === 'bub') { // if you previously saved 'bub' for bear
+      petRef = mountBear(slot);
+    } else {
+      petRef = mountDog(slot); // fallback
+    }
+  }
+
+  hookUI();
+  initSTT();        // <— ADD THIS LINE
+
+  try {
+    const last = localStorage.getItem('mentapet:lastMood');
+    if (last) renderMood(last);
+  } catch (e) {}
+  loadHelplines();
+
+  // ... your existing hookUI(), loadHelplines(), etc.
+});
+
   const pet = localStorage.getItem('mentapet:pet') || 'nova';
   const petAnim = qs('#petAnim');
   if(petAnim){
@@ -263,6 +429,7 @@ function classify(text){
 function renderMood(mood){
   document.body.classList.remove('mood-happy','mood-calm','mood-sad','mood-stressed');
   document.body.classList.add(`mood-${mood}`);
+  updatePetEmotionFromMood(mood);
 
   const statusText = {
     happy:"Your pet is joyful and playful.",
@@ -278,6 +445,23 @@ function renderMood(mood){
   if(player && typeof player.setSpeed === 'function'){
     player.setSpeed(mood==='sad' ? 0.7 : mood==='stressed' ? 1.15 : 1);
   }
+
+  // ---------- Dog roll + sounds ----------
+if (mood === 'happy') {
+  player.classList.add('roll');
+  setTimeout(() => player.classList.remove('roll'), 2000);
+
+  // 🐕 Bark sound
+  const bark = new Audio('bark.mp3');
+  bark.play().catch(err => console.log('Audio blocked by browser:', err));
+}
+
+if (mood === 'sad') {
+  // 🐾 Whine sound
+  const whine = new Audio('whine.mp3');
+  whine.play().catch(err => console.log('Audio blocked by browser:', err));
+}
+
 }
 
 function empathy(mood){ return REPLIES[mood] || REPLIES.calm; }
@@ -356,4 +540,99 @@ async function learnTip(){
   }
 }
 
+// ---------- Speech to Text (Web Speech API) ----------
+let rec = null;
+let recActive = false;
+
+function supportsSTT() {
+  return ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+}
+
+function initSTT() {
+  const micBtn = qs('#micBtn');
+  const hint   = qs('#micHint');
+  const input  = qs('#moodInput');
+
+  if (!micBtn) return; // no button on page
+
+  if (!supportsSTT()) {
+    micBtn.disabled = true;
+    micBtn.title = 'Speech input not supported in this browser';
+    return;
+  }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  rec = new SR();
+  rec.lang = 'en-US';
+  rec.interimResults = true;   // show partial text while speaking
+  rec.continuous = false;      // single utterance (end on pause)
+  rec.maxAlternatives = 1;
+
+  function setUI(listening) {
+    recActive = listening;
+    if (listening) {
+      micBtn.classList.add('recording');
+      micBtn.setAttribute('aria-pressed', 'true');
+      if (hint) { hint.style.display = 'inline'; hint.textContent = 'Listening…'; }
+    } else {
+      micBtn.classList.remove('recording');
+      micBtn.setAttribute('aria-pressed', 'false');
+      if (hint) hint.style.display = 'none';
+    }
+  }
+
+  function start() {
+    try { rec.start(); } catch (_) { /* already started */ }
+  }
+  function stop() {
+    try { rec.stop(); } catch (_) {}
+    setUI(false);
+  }
+
+  rec.onstart = () => setUI(true);
+
+  rec.onresult = (evt) => {
+    let finalText = '';
+    let interim = '';
+    for (let i = evt.resultIndex; i < evt.results.length; i++) {
+      const chunk = evt.results[i][0].transcript;
+      if (evt.results[i].isFinal) finalText += chunk;
+      else interim += chunk;
+    }
+    if (input) input.value = (finalText || interim);
+  };
+
+  rec.onerror = (e) => {
+    // Common: 'no-speech', 'audio-capture', 'not-allowed'
+    console.warn('STT error:', e);
+    setUI(false);
+    if (e.error !== 'no-speech') setReply('Microphone error. You can still type.');
+  };
+
+  rec.onend = () => {
+    setUI(false);
+    const text = (input?.value || '').trim();
+    if (text) {
+      // Auto-run analysis when you finish speaking
+      onAnalyze();
+    }
+  };
+
+  micBtn.addEventListener('click', () => {
+    if (!rec) return;
+    if (recActive) stop();
+    else start();
+  });
+
+  // (Optional) Press Ctrl+M to toggle mic
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm') {
+      e.preventDefault();
+      if (recActive) stop();
+      else start();
+    }
+  });
+
+  return { start, stop };
+}
 // =================== End of main.js ========================================
