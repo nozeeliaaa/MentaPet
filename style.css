@@ -22,7 +22,7 @@
   }
   .pet-card{ display:flex; flex-direction:column; gap:6px; padding:10px; border-radius:14px; border:1px solid #1f2937; background:#0a0f1a; cursor:pointer; }
   .pet-card:hover{ outline:2px solid #334155; }
-  .pet-name{ font-weight:700; }
+  .pet-name{ font-weight:700; color: white; }
   .pet-desc{ color:var(--muted); }
   lottie-player{ width:100%; max-width:420px; min-height:220px; }
   
@@ -106,6 +106,7 @@
   height: 200px;
   transform-style: preserve-3d;
   animation: float 3s ease-in-out infinite;
+  cursor: pointer; /* Ensure the dog is clickable */
 }
 
 .head {
@@ -289,6 +290,30 @@
 }
 .panda .arm{ position:absolute; background:#000; border-radius:50%; width:40px; height:40px; top:90px; }
 .panda .arm.left{ left:10px; } .panda .arm.right{ right:10px; }
+
+/* Ensure iframe scrollbars are hidden */
+iframe {
+  overflow: hidden;
+  scrollbar-width: none; /* For Firefox */
+}
+iframe::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Edge */
+}
+
+/* Remove scrollbar from iframe in index.html */
+iframe {
+  overflow: hidden;
+}
+
+/* Styles for iframe */
+iframe {
+  width: 200px;
+  height: 200px;
+  border: none;
+  display: block;
+  margin: 0 auto;
+  overflow: hidden;
+}
 
 /* Keep pet drawings inside their card */
 .pet-card{

@@ -94,8 +94,6 @@ async function speak(text, mood='calm'){
     const prefs = getVoicePrefs();
     if (!('speechSynthesis' in window)) return;
 
-    // If you want the toggle to gate *all* speaking by default,
-    // only call speak() when autoSpeak is on:
     if (!prefs.autoSpeak) return;
 
     const synth = window.speechSynthesis;
@@ -104,11 +102,9 @@ async function speak(text, mood='calm'){
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'en-US';
 
-    // base from user pref
     const baseRate  = Math.min(1.5, Math.max(0.5, prefs.rate || 1));
     const basePitch = 1.05;
 
-    // gentle mood tweaks
     if (mood === 'happy'){ u.rate = baseRate + 0.05; u.pitch = basePitch + 0.10; }
     else if (mood === 'sad'){ u.rate = Math.max(0.5, baseRate - 0.05); u.pitch = basePitch - 0.05; }
     else if (mood === 'stressed'){ u.rate = baseRate; u.pitch = basePitch; }
@@ -123,12 +119,17 @@ async function speak(text, mood='calm'){
   }
 }
 
-
+// 🔊 NEW: Stop Speaking function
+function stopSpeaking(){
+  try {
+    window.speechSynthesis.cancel();
+  } catch (e) {
+    console.error("Failed to stop speaking:", e);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // API: analyze text with OpenAI via Vercel serverless function (/api/ai)
-// Supports JSON or SSE streaming responses.
-// Returns { mood, risk, reply, actions[] }.
 async function analyzeTextWithAI(text){
   const pet = localStorage.getItem('mentapet:pet') || 'nova';
   const res = await fetch('/api/ai', {
@@ -137,7 +138,6 @@ async function analyzeTextWithAI(text){
     body: JSON.stringify({ text, pet })
   });
 
-  // If server streams (text/event-stream), read line-by-line and update UI
   const ctype = res.headers.get('content-type') || '';
   if (ctype.includes('text/event-stream') || (!ctype.includes('application/json') && res.body)) {
     const reader = res.body.getReader();
@@ -152,12 +152,11 @@ async function analyzeTextWithAI(text){
       const lines = chunk.split('\n').filter(l=>l.trim()!=='');
       for(const line of lines){
         if(!line.startsWith('data:')) continue;
-        // each event expected like: data: {"type":"content"|"meta", ...}
         try{
           const evt = JSON.parse(line.slice(5).trim());
           if (evt.content){
             reply += evt.content;
-            setReply(reply, false);         // incremental update
+            setReply(reply, false);
           }
           if (evt.mood) mood = evt.mood;
           if (typeof evt.risk === 'boolean') risk = evt.risk;
@@ -168,7 +167,6 @@ async function analyzeTextWithAI(text){
     return { mood, risk, reply, actions };
   }
 
-  // Otherwise plain JSON:
   const data = await res.json();
   return {
     mood: data.mood || 'calm',
@@ -227,7 +225,6 @@ function mountCat(container){
   `;
   const mouth = container.querySelector('.mouth');
   function setEmotion(state){
-    // simple: smile (curved) when happy, flat otherwise
     mouth.style.borderBottom = (state==='happy') ? '3px solid #000' : '3px solid #000';
     mouth.style.transform     = (state==='sad') ? 'translateX(-50%) rotate(180deg)' : 'translateX(-50%)';
   }
@@ -253,7 +250,6 @@ function mountBear(container){
   const armsL = container.querySelector('.arm.left');
   const armsR = container.querySelector('.arm.right');
   function setEmotion(state){
-    // wave arms when happy, neutral otherwise, tiny droop when sad
     armsL.style.transform = armsR.style.transform = '';
     mouth.style.transform = 'translateX(-50%)';
     if(state==='happy'){
@@ -267,14 +263,12 @@ function mountBear(container){
   return { setEmotion };
 }
 
-
 function updatePetEmotionFromMood(mood){
   if (!petRef || !petRef.setEmotion) return;
   const state = mood==='happy' ? 'happy' : mood==='sad' ? 'sad' : 'neutral';
   petRef.setEmotion(state);
 }
 
-// tiny wave keyframes (can live in JS via <style> if you prefer)
 (function ensureBearAnim(){
   const id='pandaWaveKey';
   if(document.getElementById(id)) return;
@@ -284,52 +278,25 @@ function updatePetEmotionFromMood(mood){
   document.head.appendChild(style);
 })();
 
-
 // ---------------------------------------------------------------------------
 // Page init
 window.addEventListener('DOMContentLoaded', ()=>{
-
-  window.addEventListener('DOMContentLoaded', () => {
-  const chosen = localStorage.getItem('mentapet:pet') || 'dog'; // values: 'dog' | 'cat' | 'bear'
+  const chosen = localStorage.getItem('mentapet:pet') || 'dog';
   const slot   = document.getElementById('petSlot');
   if (slot) {
-    if (chosen === 'dog' || chosen === 'lumi') {        // if you previously saved 'lumi' for dog
-      petRef = mountDog(slot);
-    } else if (chosen === 'cat' || chosen === 'nova') { // if you previously saved 'nova' for cat
-      petRef = mountCat(slot);
-    } else if (chosen === 'bear' || chosen === 'bub') { // if you previously saved 'bub' for bear
-      petRef = mountBear(slot);
-    } else {
-      petRef = mountDog(slot); // fallback
-    }
+    if (chosen === 'dog' || chosen === 'lumi') { petRef = mountDog(slot); }
+    else if (chosen === 'cat' || chosen === 'nova') { petRef = mountCat(slot); }
+    else if (chosen === 'bear' || chosen === 'bub') { petRef = mountBear(slot); }
+    else { petRef = mountDog(slot); }
   }
 
   hookUI();
-  initSTT();        // <— ADD THIS LINE
+  initSTT();
 
   try {
     const last = localStorage.getItem('mentapet:lastMood');
     if (last) renderMood(last);
   } catch (e) {}
-  loadHelplines();
-
-  // ... your existing hookUI(), loadHelplines(), etc.
-});
-
-  const pet = localStorage.getItem('mentapet:pet') || 'nova';
-  const petAnim = qs('#petAnim');
-  if(petAnim){
-    petAnim.src = pet==='lumi'
-      ? 'https://assets1.lottiefiles.com/packages/lf20_b3xkpv.json'
-      : pet==='bub'
-      ? 'https://assets8.lottiefiles.com/packages/lf20_4kx2q32n.json'
-      : 'https://assets2.lottiefiles.com/packages/lf20_hy4txr.json';
-  }
-  hookUI();
-  try{
-    const last = localStorage.getItem('mentapet:lastMood');
-    if(last) renderMood(last);
-  }catch(e){}
   loadHelplines();
 });
 
@@ -339,16 +306,18 @@ function hookUI(){
   qs('#breatheBtn')?.addEventListener('click', startBreathing);
   qs('#learnBtn')?.addEventListener('click', learnTip);
   qs('#openCare')?.addEventListener('click', openCareMode);
-  qs('#resourcesBtn')?.addEventListener('click', () => {
-    window.location.href = 'resources.html';
-  });
+  qs('#resourcesBtn')?.addEventListener('click', () => { window.location.href = 'resources.html'; });
   qs('#closeCare')?.addEventListener('click', ()=> qs('#careModal').classList.add('hidden'));
   qs('#groundBtn')?.addEventListener('click', startBreathing);
   qs('#stopBreath')?.addEventListener('click', stopBreathing);
   qs('#contrastBtn')?.addEventListener('click', ()=> document.body.classList.toggle('a11y-contrast'));
+
+  // NEW: stop buttons
+  qs('#stopSpeakBtn')?.addEventListener('click', stopSpeaking);
+  qs('#stopMicBtn')?.addEventListener('click', ()=>{ if(rec) rec.stop(); });
+
   document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') qs('#careModal')?.classList.add('hidden'); });
 }
-
 // ---------------------------------------------------------------------------
 // Analyze user input -> AI (with instant crisis fallback)
 async function onAnalyze(){
@@ -381,7 +350,12 @@ async function onAnalyze(){
     }
 
     // 4) Show reply + voice + optional action suggestions
-    setReply(reply || empathy(mood || 'calm'), false);
+    /*setReply(reply || empathy(mood || 'calm'), false);*/
+    if (reply && reply.trim().length > 0) {
+      setReply(reply, false);
+    } else {
+      setReply(empathy(mood || 'calm'), false);
+    }
     if (typeof petTalk === 'function') petTalk(reply, mood);
     speak(reply, mood);
 

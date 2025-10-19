@@ -41,7 +41,7 @@
         <h3>Streak</h3>
         <div id="streak">🔥 1 day</div>
         <button id="learnBtn" class="secondary" aria-label="Show an inclusive communication tip">📘 Learn Mode</button>
-        <button id="contrastBtn" class="ghost small">High Contrast</button>
+        
       </div>
 
       <div class="card">
@@ -71,6 +71,7 @@
         <button id="analyzeBtn" class="primary" aria-label="Analyze how I feel">Analyze</button>
         <button id="micBtn" class="secondary" aria-pressed="false" style="margin-left:8px">🎤 Speak</button>
         <small id="micHint" class="muted" style="margin-left:8px; display:none;">Listening…</small>
+        <button id="stopSpeakBtn" class="ghost small" style="margin-left:8px;">⏹️ Stop Voice</button>
       </div>
     </section>
   </main>
@@ -231,7 +232,7 @@
 
     function mountDog(el) {
       el.innerHTML = `
-        <div class="dog">
+        <div class="dog" id="dog">
           <div class="head">
             <div class="ear left"></div>
             <div class="ear right"></div>
@@ -245,6 +246,25 @@
           <div class="body"></div>
           <div class="tail"></div>
         </div>`;
+
+      // Ensure the dog starts with a happy emotion
+      setEmotion('happy');
+
+      // Add interaction logic for the dog
+      const dogElement = document.getElementById('dog');
+      dogElement.addEventListener('click', () => {
+        setEmotion('happy'); // Trigger happy emotion on click
+
+        // Play bark sound
+        const bark = new Audio('bark.mp3');
+        bark.play().catch(err => console.error('Audio playback error:', err));
+
+        // Add movement animation
+        dogElement.style.animation = 'moveDog 1s ease-in-out';
+        setTimeout(() => {
+          dogElement.style.animation = ''; // Reset animation after it completes
+        }, 1000);
+      });
     }
 
     function mountCat(el){
@@ -306,13 +326,13 @@ function setEmotion(emotion) {
     mouth.classList.add('happy');
     tail.style.animation = 'wag 0.5s ease-in-out infinite alternate';
     const bark = new Audio('bark.mp3');
-    bark.play().catch(err => console.log('Audio blocked:', err));
+    bark.play().catch(err => console.error('Audio playback error:', err));
   } 
   else if (emotion === 'sad') {
     mouth.classList.add('sad');
     tail.style.transform = 'translateX(-10px) translateZ(-50px) rotateZ(-10deg) rotateX(10deg)';
     const whine = new Audio('whine.mp3');
-    whine.play().catch(err => console.log('Audio blocked:', err));
+    whine.play().catch(err => console.error('Audio playback error:', err));
   }
 }
 
