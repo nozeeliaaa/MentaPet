@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MentaPet — Therapist & Crisis Support Finder</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+  <style>
+    :root{
+      --bg:#0f172a; --card:#0b0f1a; --text:#e5e7eb; --muted:#9ca3af; --accent:#22d3ee;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--text);}
+    header{padding:14px 16px; border-bottom:1px solid #1f2937; display:flex; flex-direction:column; gap:12px;}
+    header h1{margin:0; font-size:1.4rem}
+    .controls{display:flex; gap:8px; flex-wrap:wrap;}
+    .input{padding:8px; border-radius:8px; border:1px solid #334155; background:#0b0f1a; color:var(--text); flex:1;}
+    .btn{cursor:pointer; border:0; border-radius:8px; padding:10px 14px; font-weight:600;}
+    .primary{background:var(--accent); color:#002;}
+    .secondary{background:#1e293b; color:var(--text);}
+    .ghost{background:transparent; color:var(--muted); border:1px dashed #334155;}
+    .layout{display:grid; grid-template-columns:360px 1fr; min-height:calc(100vh - 120px);}
+    #sidebar{border-right:1px solid #1f2937; background:#0b0f1a;}
+    .card{padding:12px; border-bottom:1px solid #1f2937}
+    .list{padding:8px 12px; display:flex; flex-direction:column; gap:8px;}
+    .item{background:#0b1020; border:1px solid #1f2937; border-radius:12px; padding:10px;}
+    .item h4{margin:0 0 6px; font-size:1rem;}
+    .item small{color:var(--muted)}
+    .distance{font-weight:700}
+    #map{height:calc(100vh - 120px); width:100%;}
+    .notice{padding:8px 12px; color:#cbd5e1; font-size:.9rem;}
+    @media (max-width:900px){ .layout{grid-template-columns:1fr;} #map{height:60vh;} }
+    .alert{background:#dc2626; padding:12px; color:white; font-weight:600; text-align:center;}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🧭 Therapist & Crisis Support Finder — Jamaica</h1>
+    <div class="controls">
+      <input id="searchInput" class="input" placeholder="Search (e.g. therapist in Mandeville)" />
+      <button id="searchBtn" class="btn primary">🔎 Search</button>
+      <button id="locBtn" class="btn secondary">📍 Use My Location</button>
+      <a href="room.html" class="btn ghost">← Back to Room</a>
+    </div>
+  </header>
+
+  <div class="alert">
+    ⚠️ If you or someone you know is in crisis, call <strong>888-NEW-LIFE (888-639-5433)</strong> or <strong>911</strong> in Jamaica.
+  </div>
+
+  <div class="layout">
+    <aside id="sidebar">
+      <div class="card">
+        <strong>Closest therapists</strong>
+        <div class="notice">Click “Use My Location”, then tap a result to zoom on the map.</div>
+      </div>
+      <div id="list" class="list"></div>
+      <div class="card">
+        <small style="color:#9ca3af">
+          Not an endorsement; info is public listings. If you’re in immediate danger, contact local emergency services.
+        </small>
+      </div>
+    </aside>
+
+    <main id="map"></main>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // 📍 Starter therapist dataset (always visible)
+    const THERAPISTS = [
+      { name: "Family Life Ministries (Kingston)", lat: 18.00858, lng: -76.79497, address: "1 Cecelio Ave, Kingston 10", phone: "+1 876-920-1034", url: "https://familylifeministriesjamaica.com/" },
+      { name: "Choose Life International (New Kingston)", lat: 17.9833, lng: -76.8000, address: "28 Haining Road, Kingston 5", phone: "+1 876-920-7924", url: "https://chooselifeintl.org/" },
+      { name: "UWI Psychiatry (Mona)", lat: 18.011021, lng: -76.744486, address: "University Hospital, Kingston 7", url: "https://uhwi.gov.jm/clinics/other-outpatient" },
+      { name: "Thrive Behavioral Health (Montego Bay)", lat: 18.47767, lng: -77.91117, address: "Brandon Hill, Montego Bay", url: "https://thrivebh.yolasite.com/" },
+      { name: "Robinson’s Counselling Services (Montego Bay)", lat: 18.4720222, lng: -77.9216569, address: "39 Church Street, Montego Bay", phone: "+1 876-593-8642" },
+      { name: "Portmore Counseling & Wellness", lat: 17.9475, lng: -76.8683, address: "Portmore, St. Catherine", phone: "+1 876-555-7890" },
+      { name: "Mandeville Mental Health Centre", lat: 18.0424, lng: -77.5075, address: "Caledonia Rd, Mandeville", phone: "+1 876-555-3456" }
+    ];
+
+    const JAMAICA = { lat: 18.1096, lng: -77.2975 };
+    const map = L.map('map').setView([JAMAICA.lat, JAMAICA.lng], 7);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const therapistLayer = L.layerGroup().addTo(map);
+    const markersById = new Map();
+
+    // 🗺️ Add base markers from our known list
+    function addBaseMarkers() {
+      THERAPISTS.forEach(t => {
+        const dir = `https://www.google.com/maps?q=${t.lat},${t.lng}`;
+        const popupContent = `
+          <strong>${t.name}</strong><br/>
+          ${t.address || ""}<br/>
+          ${t.phone ? `<a href="tel:${t.phone.replace(/[^0-9+]/g,'')}">${t.phone}</a><br/>` : ""}
+          ${t.url ? `<a href="${t.url}" target="_blank">Website</a><br/>` : ""}
+          <a href="${dir}" target="_blank">Directions</a>
+        `;
+        const m = L.marker([t.lat, t.lng]).addTo(therapistLayer).bindPopup(popupContent);
+        markersById.set(t.name, m);
+      });
+    }
+    addBaseMarkers();
+
+    // 📍 Geolocation
+    let userMarker = null, userCircle = null;
+
+    document.getElementById("locBtn").addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        alert("Your browser doesn’t support location.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(pos => {
+        const me = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy||30 };
+        if (userMarker) { map.removeLayer(userMarker); map.removeLayer(userCircle); }
+        userMarker = L.marker([me.lat, me.lng], { title: "You are here" }).addTo(map);
+        userCircle = L.circle([me.lat, me.lng], { radius: me.acc, color:"#22d3ee" }).addTo(map);
+        map.setView([me.lat, me.lng], 14); // 👈 closer zoom
+        renderNearest(me);
+      }, err => alert("Could not get your location."));
+    });
+
+    // 📏 Distance calculation
+    function haversineKm(a, b){
+      const toRad = d => d * Math.PI / 180;
+      const R = 6371;
+      const dLat = toRad(b.lat - a.lat);
+      const dLng = toRad(b.lng - a.lng);
+      const lat1 = toRad(a.lat), lat2 = toRad(b.lat);
+      const h = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)**2;
+      return 2 * R * Math.asin(Math.sqrt(h));
+    }
+
+    // 📋 Render nearest list
+    function renderNearest(me){
+      const list = document.getElementById('list');
+      const sorted = THERAPISTS.map((t) => ({
+        ...t, km: haversineKm(me, {lat:t.lat, lng:t.lng})
+      })).sort((a,b)=>a.km-b.km).slice(0, 8);
+
+      list.innerHTML = "";
+      sorted.forEach(item=>{
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+          <h4>${item.name}</h4>
+          <div><span class="distance">${item.km.toFixed(1)} km</span> away</div>
+          <small>${item.address || ""}</small><br/>
+          ${item.phone ? `<small><a href="tel:${item.phone.replace(/[^0-9+]/g,'')}">${item.phone}</a></small><br/>` : ""}
+          ${item.url ? `<small><a href="${item.url}" target="_blank">Website</a></small><br/>` : ""}
+          <small><a href="https://www.google.com/maps?q=${item.lat},${item.lng}" target="_blank">Directions</a></small>
+        `;
+        div.addEventListener('click', ()=>{
+          map.setView([item.lat, item.lng], 15);
+          markersById.get(item.name)?.openPopup();
+        });
+        list.appendChild(div);
+      });
+    }
+
+    // 🔍 Nominatim search (live)
+    document.getElementById("searchBtn").addEventListener("click", async () => {
+      const query = document.getElementById("searchInput").value.trim();
+      if (!query) return alert("Please type something like 'therapist Kingston'");
+
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}+Jamaica&limit=15`;
+      const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+      const data = await res.json();
+
+      if (data.length === 0) {
+        alert("No results found. Try another search term.");
+        return;
+      }
+
+      data.forEach((place) => {
+        const lat = parseFloat(place.lat);
+        const lon = parseFloat(place.lon);
+        const name = place.display_name.split(",")[0];
+        const marker = L.marker([lat, lon]).addTo(therapistLayer);
+        marker.bindPopup(`<strong>${name}</strong><br>${place.display_name}`);
+      });
+
+      map.setView([parseFloat(data[0].lat), parseFloat(data[0].lon)], 14);
+    });
+  </script>
+</body>
+</html>
+

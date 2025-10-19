@@ -173,6 +173,9 @@ function hookUI(){
   qs('#breatheBtn')?.addEventListener('click', startBreathing);
   qs('#learnBtn')?.addEventListener('click', learnTip);
   qs('#openCare')?.addEventListener('click', openCareMode);
+  qs('#resourcesBtn')?.addEventListener('click', () => {
+    window.location.href = 'resources.html';
+  });
   qs('#closeCare')?.addEventListener('click', ()=> qs('#careModal').classList.add('hidden'));
   qs('#groundBtn')?.addEventListener('click', startBreathing);
   qs('#stopBreath')?.addEventListener('click', stopBreathing);
