@@ -30,9 +30,74 @@ const AFFIRMATIONS = [
 
 const qs = s => document.querySelector(s);
 
-// ==========================================================================
+// ---------------------------------------------------------------------------
+// Speech helpers (nicer voice + mood-aware tone)
+async function getVoicesReady(timeoutMs = 2000){
+  const synth = window.speechSynthesis;
+  let voices = synth.getVoices();
+  if (voices && voices.length) return voices;
+
+  return await new Promise(resolve=>{
+    const done=()=>resolve(synth.getVoices());
+    let tm=setTimeout(done, timeoutMs);
+
+    const handler=()=>{ clearTimeout(tm); synth.removeEventListener('voiceschanged', handler); done(); };
+    synth.addEventListener('voiceschanged', handler);
+
+    let tries=0;
+    const poll=setInterval(()=>{
+      tries++;
+      voices=synth.getVoices();
+      if(voices && voices.length){
+        clearInterval(poll); clearTimeout(tm); synth.removeEventListener('voiceschanged', handler); resolve(voices);
+      }
+      if(tries>10) clearInterval(poll);
+    },200);
+  });
+}
+
+async function pickVoice(){
+  const voices = await getVoicesReady();
+  const saved = localStorage.getItem('mentapet:voiceName');
+  if(saved){
+    const v = voices.find(v=>v.name===saved);
+    if(v) return v;
+  }
+  const preferred = [
+    "Microsoft Aria Online (Natural) - English (United States)",
+    "Microsoft Jenny Online (Natural) - English (United States)",
+    "Google UK English Female",
+    "Google US English",
+    "Samantha","Joanna","Luna"
+  ];
+  let v = voices.find(v=>preferred.includes(v.name));
+  if(v) return v;
+  v = voices.find(v=>v.lang?.startsWith('en') && /female|samantha|aria|jenny|joanna|luna/i.test(v.name));
+  if(v) return v;
+  v = voices.find(v=>v.lang?.startsWith('en'));
+  return v || voices[0];
+}
+
+async function speak(text, mood='calm'){
+  try{
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang='en-US';
+    if(mood==='happy'){ u.rate=1.05; u.pitch=1.15; }
+    else if(mood==='sad'){ u.rate=0.95; u.pitch=1.0; }
+    else if(mood==='stressed'){ u.rate=0.98; u.pitch=1.05; }
+    else { u.rate=1.0; u.pitch=1.08; }
+    const v = await pickVoice();
+    if(v) u.voice = v;
+    setTimeout(()=>synth.speak(u),120);
+  }catch(e){ console.error('Speech error:', e); }
+}
+
+// ---------------------------------------------------------------------------
 // API: analyze text with OpenAI via Vercel serverless function (/api/ai)
-// Returns { mood, risk, reply, actions[] }
+// Supports JSON or SSE streaming responses.
+// Returns { mood, risk, reply, actions[] }.
 async function analyzeTextWithAI(text){
   const pet = localStorage.getItem('mentapet:pet') || 'nova';
   const res = await fetch('/api/ai', {
@@ -40,17 +105,54 @@ async function analyzeTextWithAI(text){
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text, pet })
   });
-  // If function not found or other error, this will throw; caught in onAnalyze
-  return await res.json();
+
+  // If server streams (text/event-stream), read line-by-line and update UI
+  const ctype = res.headers.get('content-type') || '';
+  if (ctype.includes('text/event-stream') || (!ctype.includes('application/json') && res.body)) {
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let reply = '';
+    let mood = 'calm', risk = false, actions = [];
+
+    while(true){
+      const { value, done } = await reader.read();
+      if(done) break;
+      const chunk = decoder.decode(value, { stream:true });
+      const lines = chunk.split('\n').filter(l=>l.trim()!=='');
+      for(const line of lines){
+        if(!line.startsWith('data:')) continue;
+        // each event expected like: data: {"type":"content"|"meta", ...}
+        try{
+          const evt = JSON.parse(line.slice(5).trim());
+          if (evt.content){
+            reply += evt.content;
+            setReply(reply, false);         // incremental update
+          }
+          if (evt.mood) mood = evt.mood;
+          if (typeof evt.risk === 'boolean') risk = evt.risk;
+          if (Array.isArray(evt.actions)) actions = evt.actions;
+        }catch{}
+      }
+    }
+    return { mood, risk, reply, actions };
+  }
+
+  // Otherwise plain JSON:
+  const data = await res.json();
+  return {
+    mood: data.mood || 'calm',
+    risk: !!data.risk,
+    reply: data.reply || REPLIES.calm,
+    actions: Array.isArray(data.actions) ? data.actions : []
+  };
 }
 
-// ==========================================================================
+// ---------------------------------------------------------------------------
 // Page init
 window.addEventListener('DOMContentLoaded', ()=>{
   const pet = localStorage.getItem('mentapet:pet') || 'nova';
   const petAnim = qs('#petAnim');
   if(petAnim){
-    // default lottie per pet
     petAnim.src = pet==='lumi'
       ? 'https://assets1.lottiefiles.com/packages/lf20_b3xkpv.json'
       : pet==='bub'
@@ -75,11 +177,10 @@ function hookUI(){
   qs('#groundBtn')?.addEventListener('click', startBreathing);
   qs('#stopBreath')?.addEventListener('click', stopBreathing);
   qs('#contrastBtn')?.addEventListener('click', ()=> document.body.classList.toggle('a11y-contrast'));
-
   document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') qs('#careModal')?.classList.add('hidden'); });
 }
 
-// ==========================================================================
+// ---------------------------------------------------------------------------
 // Analyze user input -> AI (with instant crisis fallback)
 async function onAnalyze(){
   const raw = (qs('#moodInput')?.value || '').trim();
@@ -112,7 +213,8 @@ async function onAnalyze(){
 
     // 4) Show reply + voice + optional action suggestions
     setReply(reply || empathy(mood || 'calm'), false);
-    if (typeof petTalk === 'function') petTalk(reply, mood); else speak(reply);
+    if (typeof petTalk === 'function') petTalk(reply, mood);
+    speak(reply, mood);
 
     const replyBox = qs('#reply');
     if (replyBox && Array.isArray(actions) && actions.length){
@@ -181,16 +283,9 @@ function empathy(mood){ return REPLIES[mood] || REPLIES.calm; }
 function setReply(text, speakIt=false){
   const el = qs('#reply');
   if(!el) return;
-  el.textContent = text;
+  // preserve newlines; allow long paragraphs
+  el.innerHTML = String(text).replace(/\n/g,'<br>');
   if(speakIt) speak(text);
-}
-
-function speak(text){
-  try{
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang='en-US'; u.rate=1; u.pitch=1;
-    speechSynthesis.cancel(); speechSynthesis.speak(u);
-  }catch(e){}
 }
 
 // ---------- Care Mode ----------

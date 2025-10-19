@@ -90,3 +90,123 @@
 }
 
 .card { overflow: visible; }
+/* 🐶 Golden Dog Styling */
+.dog {
+  position: relative;
+  width: 180px;
+  height: 200px;
+  margin: 0 auto;
+  transform-style: preserve-3d;
+}
+
+.dog .head {
+  position: relative;
+  width: 120px;
+  height: 100px;
+  background: linear-gradient(145deg, #facc15, #d97706); /* golden tones */
+  border-radius: 50% 50% 45% 45%;
+  margin: 0 auto;
+  box-shadow: 0 4px 10px #0005;
+}
+
+.dog .ear {
+  position: absolute;
+  width: 30px;
+  height: 50px;
+  background: linear-gradient(145deg, #b45309, #92400e);
+  border-radius: 50%;
+  top: -15px;
+}
+
+.dog .ear.left { left: -10px; transform: rotate(-15deg); }
+.dog .ear.right { right: -10px; transform: rotate(15deg); }
+
+.dog .eye {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #000;
+  border-radius: 50%;
+  top: 35px;
+  box-shadow: 0 0 0 3px #fff2; /* subtle glow */
+}
+
+.dog .eye.left { left: 30px; }
+.dog .eye.right { right: 30px; }
+
+.dog .snout {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 45px;
+  background: #fcd34d;
+  border-radius: 50% 50% 60% 60%;
+  box-shadow: inset 0 2px 4px #0003;
+}
+
+.dog .nose {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 14px;
+  background: #000;
+  border-radius: 50%;
+}
+
+.dog .mouth {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 10px;
+  border-bottom: 3px solid #000;
+  border-radius: 0 0 50% 50%;
+  transition: all 0.3s ease;
+}
+
+.mouth.happy {
+  height: 20px;
+  border-radius: 50%;
+}
+
+.mouth.sad {
+  height: 10px;
+  transform: rotate(180deg);
+}
+
+.dog .body {
+  position: relative;
+  width: 140px;
+  height: 90px;
+  background: linear-gradient(145deg, #facc15, #d97706);
+  margin: -10px auto 0;
+  border-radius: 50% 50% 40% 40%;
+  box-shadow: 0 4px 10px #0005;
+}
+
+.dog .tail {
+  position: absolute;
+  right: -20px;
+  top: 30px;
+  width: 20px;
+  height: 60px;
+  background: linear-gradient(145deg, #b45309, #92400e);
+  border-radius: 50%;
+  transform-origin: top center;
+}
+
+@keyframes wag {
+  0% { transform: rotateZ(0deg); }
+  100% { transform: rotateZ(30deg); }
+}
+
+/* 🐶 Hover effect: subtle bounce */
+.dog:hover {
+  transform: translateY(-4px) scale(1.02);
+  transition: 0.3s ease;
+}

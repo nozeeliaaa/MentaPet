@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Golden Dog</title>
+<style>
+/* * EDITED CSS: Ears are lower and behind the head. 
+ * Tail is attached to the back of the body. 
+ */
+
+body {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  background: radial-gradient(circle, #f5e0b7 0%, #f0c77e 100%);
+  margin:0;
+  perspective: 1000px; 
+}
+
+/* Dog container */
+.dog {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  transform-style: preserve-3d;
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Head */
+.head {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(145deg, #f6d07e, #f0b84a);
+  border-radius: 50%;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) translateZ(30px);
+  box-shadow: inset -5px -5px 15px rgba(0,0,0,0.2), 5px 5px 20px rgba(0,0,0,0.3);
+  transform-style: preserve-3d;
+}
+
+/* Ears - MODIFIED POSITION */
+.ear {
+  position: absolute;
+  width: 40px;
+  height: 60px;
+  background: linear-gradient(145deg, #f6d07e, #f0b84a);
+  border-radius: 50% 50% 0 0;
+  top: 15px; /* Lower position on the head */
+  transform-origin: top center;
+  box-shadow: -2px 5px 10px rgba(0,0,0,0.2);
+}
+
+.ear.left {
+  left: -20px; /* Adjusted horizontal position */
+  /* Moved back slightly using translateZ() */
+  transform: rotateY(-30deg) rotateX(10deg) translateZ(-5px); 
+}
+
+.ear.right {
+  right: -20px; /* Adjusted horizontal position */
+  /* Moved back slightly using translateZ() */
+  transform: rotateY(30deg) rotateX(10deg) translateZ(-5px); 
+}
+
+/* Eyes */
+.eye {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  background: #000;
+  border-radius: 50%;
+  top: 30px;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+}
+
+.eye.left {
+  left: 20px;
+  transform: translateZ(10px);
+}
+
+.eye.right {
+  right: 20px;
+  transform: translateZ(10px);
+}
+
+/* Snout */
+.snout {
+  position: absolute;
+  width: 50px;
+  height: 40px;
+  background: linear-gradient(145deg, #f3c77f, #e0a83d);
+  border-radius: 50% / 40%;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%) translateZ(20px);
+  box-shadow: inset -3px -3px 10px rgba(0,0,0,0.2);
+  transform-style: preserve-3d;
+}
+
+/* Nose */
+.nose {
+  position: absolute;
+  width: 15px;
+  height: 10px;
+  background: #000;
+  border-radius: 50%;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%) translateZ(5px);
+}
+
+/* Mouth */
+.mouth {
+  position: absolute;
+  width: 30px;
+  height: 5px;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border-bottom: 3px solid #000;
+  transition: all 0.3s ease;
+}
+
+/* Happy/Sad Mouth */
+.mouth.happy {
+  border-bottom: 3px solid #000;
+  border-radius: 0 0 15px 15px;
+}
+
+.mouth.sad {
+  border-top: 3px solid #000;
+  border-bottom: none;
+  border-radius: 15px 15px 0 0;
+}
+
+/* Body */
+.body {
+  position: absolute;
+  width: 120px;
+  height: 80px;
+  background: linear-gradient(145deg, #f6d07e, #f0b84a);
+  border-radius: 40px;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateZ(-20px) rotateX(15deg);
+  box-shadow: 5px 5px 20px rgba(0,0,0,0.3);
+}
+
+/* Tail connected to back of body - MODIFIED POSITION */
+.tail {
+  position: absolute;
+  width: 50px;
+  height: 12px;
+  background: #f0b84a;
+  border-radius: 50%;
+  top: 135px; /* Positioned at the back/butt area of the body */
+  left: 50%; /* Start from horizontal center */
+  transform-origin: left center; /* Wag from base */
+  /* Aligned to the center-back of the body, then rotated for initial look */
+  transform: translateX(-10px) translateZ(-50px) rotateX(0deg) rotateZ(0deg); 
+  transition: transform 0.3s ease;
+}
+
+/* Animations - MODIFIED for new tail position */
+@keyframes wag {
+  0% { transform: translateX(-10px) translateZ(-50px) rotateX(0deg) rotateZ(30deg); }
+  100% { transform: translateX(-10px) translateZ(-50px) rotateX(0deg) rotateZ(-30deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: rotateY(0deg); }
+  50% { transform: rotateY(10deg); }
+}
+</style>
+</head>
+<body>
+
+<div class="dog">
+  <div class="head">
+    <div class="ear left"></div>
+    <div class="ear right"></div>
+    <div class="eye left"></div>
+    <div class="eye right"></div>
+    <div class="snout">
+      <div class="nose"></div>
+      <div class="mouth"></div>
+    </div>
+  </div>
+  <div class="body"></div>
+  <div class="tail"></div>
+</div>
+
+<script>
+// Get elements
+const tail = document.querySelector('.tail');
+const mouth = document.querySelector('.mouth');
+
+// Function to change emotion
+function setEmotion(emotion) {
+  if (emotion === 'happy') {
+    mouth.classList.add('happy');
+    mouth.classList.remove('sad');
+    tail.style.animation = 'wag 0.5s ease-in-out infinite alternate';
+  } else if (emotion === 'sad') {
+    mouth.classList.add('sad');
+    mouth.classList.remove('happy');
+    tail.style.animation = 'none';
+    // Updated droopy tail position to match the new base
+    tail.style.transform = 'translateX(-10px) translateZ(-50px) rotateZ(-10deg) rotateX(10deg)'; 
+  }
+}
+
+// Example usage
+setEmotion('happy');
+
+// Toggle emotion every 3 seconds
+let happy = true;
+setInterval(() => {
+  happy = !happy;
+  setEmotion(happy ? 'happy' : 'sad');
+}, 3000);
+</script>
+
+</body>
+</html>

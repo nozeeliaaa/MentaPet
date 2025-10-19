@@ -32,7 +32,22 @@
 
     <!-- CENTER: pet -->
     <section class="pet-stage card">
-      <lottie-player id="petAnim" background="transparent" speed="1" loop autoplay></lottie-player>
+      <!-- 🐶 3D Golden Dog animation -->
+      <div class="dog" id="dog">
+        <div class="head">
+          <div class="ear left"></div>
+          <div class="ear right"></div>
+          <div class="eye left"></div>
+          <div class="eye right"></div>
+          <div class="snout">
+            <div class="nose"></div>
+            <div class="mouth"></div>
+          </div>
+        </div>
+        <div class="body"></div>
+        <div class="tail"></div>
+      </div>
+
       <div id="petStatus" class="pet-status">Your pet feels calm.</div>
       <div class="stage-buttons">
         <button id="breatheBtn" class="secondary">🌬 Breathe 60s</button>
@@ -78,8 +93,41 @@
     <small>We support and connect you to real help when needed. Your feelings are valid. 💛</small>
   </footer>
 
-  
+  <!-- Original scripts -->
   <script src="auth.js" defer></script>
   <script src="main.js" defer></script>
+
+  <!-- 🧠 Dog interaction script -->
+  <script>
+    const dog = document.getElementById('dog');
+    const tail = dog?.querySelector('.tail');
+    const mouth = dog?.querySelector('.mouth');
+    const petStatus = document.getElementById('petStatus');
+
+    function setEmotion(emotion) {
+      if (!mouth || !tail) return;
+      if (emotion === 'happy') {
+        mouth.classList.add('happy');
+        mouth.classList.remove('sad');
+        tail.style.animation = 'wag 0.5s ease-in-out infinite alternate';
+        petStatus.textContent = 'Your pet is happy! 🐶';
+      } else if (emotion === 'sad') {
+        mouth.classList.add('sad');
+        mouth.classList.remove('happy');
+        tail.style.animation = 'none';
+        tail.style.transform = 'translateX(-10px) translateZ(-50px) rotateZ(-10deg) rotateX(10deg)';
+        petStatus.textContent = 'Your pet feels calm.';
+      }
+    }
+
+    // Initial state
+    setEmotion('sad');
+
+    // Pet the dog on click
+    dog?.addEventListener('click', () => {
+      setEmotion('happy');
+      setTimeout(() => setEmotion('sad'), 3000);
+    });
+  </script>
 </body>
 </html>

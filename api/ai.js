@@ -27,22 +27,24 @@ Respond with gentle empathy and suggest a small coping action if appropriate.
       ],
       temperature: 0.8,
       max_tokens: 450,
+      stream: true, // Enable streaming
     });
 
-    const aiReply = response.choices?.[0]?.message?.content || "I'm here with you. Let's take a breath together.";
-    const risk = /(suicide|kill myself|end it|die|hopeless|worthless)/i.test(text);
-    const mood = risk ? "sad" : text.includes("happy") ? "happy" : text.includes("anxious") ? "stressed" : "calm";
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
 
-    return res.status(200).json({
-      mood,
-      risk,
-      reply: aiReply,
-      actions: ["Breathe 60s", "Affirmation", "Talk to a friend"],
-      source: "ai"
-    });
+    for await (const chunk of response) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) {
+        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+    }
+
+    res.end();
 
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "AI request failed", source: "fallback" });
+    res.status(500).json({ error: "AI request failed", source: "fallback" });
   }
 }

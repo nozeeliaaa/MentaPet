@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panda Bear</title>
+<style>
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: radial-gradient(circle, #e0f4ff 0%, #b7e2ff 100%);
+  margin: 0;
+  perspective: 1000px;
+}
+
+/* Floating animation */
+@keyframes float {
+  0%,100% { transform: translateY(0) rotateY(0deg); }
+  50% { transform: translateY(-10px) rotateY(10deg); }
+}
+
+.animal {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  transform-style: preserve-3d;
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Panda styles */
+.panda .head { position: absolute; width: 110px; height: 110px; background: linear-gradient(145deg, #ffffff, #f0f0f0); border-radius: 50%; top: 0; left: 50%; transform: translateX(-50%) translateZ(30px); box-shadow: inset -5px -5px 10px rgba(0,0,0,0.1), 5px 5px 15px rgba(0,0,0,0.2); }
+.panda .ear { position: absolute; width: 35px; height: 35px; background: #000; border-radius: 50%; top: -10px; }
+.panda .ear.left { left: 10px; }
+.panda .ear.right { right: 10px; }
+.panda .eye-spot { position: absolute; width: 30px; height: 35px; background: #000; border-radius: 50%; top: 30px; }
+.panda .eye-spot.left { left: 15px; }
+.panda .eye-spot.right { right: 15px; }
+.panda .eye { position: absolute; width: 14px; height: 14px; background: white; border-radius: 50%; top: 42px; }
+.panda .eye.left { left: 30px; }
+.panda .eye.right { right: 30px; }
+.panda .nose { position: absolute; width: 18px; height: 12px; background: #000; border-radius: 50%; top: 58px; left: 50%; transform: translateX(-50%); }
+.panda .mouth { position: absolute; width: 30px; height: 10px; border-bottom: 3px solid #000; border-radius: 50%; top: 72px; left: 50%; transform: translateX(-50%); }
+.panda .body { position: absolute; width: 130px; height: 90px; background: #ffffff; border-radius: 45px; top: 85px; left: 50%; transform: translateX(-50%) translateZ(-20px) rotateX(15deg); box-shadow: 5px 5px 15px rgba(0,0,0,0.2); }
+.panda .arm { position: absolute; background: #000; border-radius: 50%; width: 40px; height: 40px; top: 90px; }
+.panda .arm.left { left: 10px; }
+.panda .arm.right { right: 10px; }
+</style>
+</head>
+<body>
+<div class="animal panda">
+  <div class="head">
+    <div class="ear left"></div>
+    <div class="ear right"></div>
+    <div class="eye-spot left"></div>
+    <div class="eye-spot right"></div>
+    <div class="eye left"></div>
+    <div class="eye right"></div>
+    <div class="nose"></div>
+    <div class="mouth"></div>
+  </div>
+  <div class="body">
+    <div class="arm left"></div>
+    <div class="arm right"></div>
+  </div>
+</div>
+</body>
+</html>
